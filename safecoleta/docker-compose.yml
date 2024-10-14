@@ -1,0 +1,42 @@
+version: '3.8'
+services:
+  safecoleta-app:
+    build:
+      context: ./safecoleta
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      PROFILE: dev
+      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@db:1521/xepdb1
+      SPRING_DATASOURCE_USERNAME: system
+      SPRING_DATASOURCE_PASSWORD: senha_segura
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_FLYWAY_FAIL_ON_MISSING_LOCATIONS: "true"
+      SPRING_FLYWAY_LOCATIONS: classpath:db/migrations
+      JWT_SECRET: safeColeta
+    depends_on:
+      - db 
+    networks:
+      - safecoleta-network
+
+  db:
+    image: gvenzl/oracle-xe:latest
+    environment:
+      ORACLE_PASSWORD: senha_segura
+      ORACLE_PDB: xepdb1
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    networks:
+      - safecoleta-network
+
+volumes:
+  oracle-data:
+
+networks:
+  safecoleta-network:
+    driver: bridge
