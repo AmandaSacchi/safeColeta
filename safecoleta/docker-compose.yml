@@ -15,11 +15,10 @@ services:
       SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
       SPRING_FLYWAY_ENABLED: "true"
       SPRING_FLYWAY_FAIL_ON_MISSING_LOCATIONS: "true"
-      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
       SPRING_FLYWAY_LOCATIONS: classpath:db/migrations
       JWT_SECRET: safeColeta
     depends_on:
-      - db  # O serviço da aplicação depende do Oracle DB
+      - db 
     networks:
       - safecoleta-network
 
