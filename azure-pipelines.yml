@@ -4,16 +4,30 @@
 # https://aka.ms/yaml
 
 trigger:
-- main
+  branches:
+    include:
+      - '*'
 
 pool:
   name: Default
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+  # Faz o checkout do código
+  - checkout: self
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+  # Build do projeto com Maven
+  - task: Maven@3
+    inputs:
+      mavenPomFile: 'pom.xml'
+      goals: 'clean install'
+      options: '-B'
+      publishJUnitResults: true
+      testResultsFiles: '*/surefire-reports/TEST-.xml'
+
+  # Publicar cobertura de código usando JaCoCo
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'JaCoCo'
+      summaryFileLocation: 'target/site/jacoco/jacoco.xml'
+      reportDirectory: 'target/site/jacoco'
+      failIfCoverageEmpty: true
