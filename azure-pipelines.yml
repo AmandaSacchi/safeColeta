@@ -1,18 +1,23 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
+# Arquivo Azure Pipelines YAML para o SafeColeta
 trigger:
   branches:
     include:
       - '*'
 
 pool:
-  name: Default
+  vmImage: 'ubuntu-latest'
+
+services:
+  # Configura o banco de dados Oracle usando o serviço do Docker Compose
+  db:
+    image: gvenzl/oracle-xe:latest
+    ports:
+      - 1521:1521
+    env:
+      ORACLE_PASSWORD: 'senha_segura'
+      ORACLE_PDB: 'xepdb1'
 
 steps:
-  # Faz o checkout do código
   - checkout: self
 
   # Build do projeto com Maven
@@ -22,7 +27,22 @@ steps:
       goals: 'clean install'
       options: '-B'
       publishJUnitResults: true
-      testResultsFiles: '*/surefire-reports/TEST-.xml'
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+
+  # Configurar o Docker Compose
+  - task: DockerCompose@0
+    displayName: 'Run Docker Compose'
+    inputs:
+      containerregistrytype: 'Container Registry'
+      dockerComposeFile: '**/docker-compose.yml'
+      action: 'Run services'
+      detached: true
+
+  # Espera o banco de dados estar disponível
+  - script: |
+      echo "Aguardando o banco de dados ficar disponível..."
+      sleep 60
+    displayName: 'Wait for DB to be ready'
 
   # Publicar cobertura de código usando JaCoCo
   - task: PublishCodeCoverageResults@1
@@ -31,3 +51,11 @@ steps:
       summaryFileLocation: 'target/site/jacoco/jacoco.xml'
       reportDirectory: 'target/site/jacoco'
       failIfCoverageEmpty: true
+
+  # Derrubar os serviços Docker
+  - task: DockerCompose@0
+    displayName: 'Shut Down Docker Compose'
+    inputs:
+      containerregistrytype: 'Container Registry'
+      dockerComposeFile: '**/docker-compose.yml'
+      action: 'Down'
