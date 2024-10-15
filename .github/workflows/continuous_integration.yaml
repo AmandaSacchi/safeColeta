@@ -16,4 +16,4 @@ jobs:
                 distribution: 'temurin'
                 java-version: '21'
         -   name: Testes unitarios
-            run: mvn package -DskipTests
+            run: mvn package
